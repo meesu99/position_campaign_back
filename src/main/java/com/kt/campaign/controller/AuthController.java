@@ -89,6 +89,11 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal String email) {
         try {
+            // 인증되지 않은 경우
+            if (email == null) {
+                return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
+            }
+            
             AppUser user = authService.getCurrentUser(email);
             return ResponseEntity.ok(Map.of(
                 "id", user.getId(),
@@ -98,7 +103,7 @@ public class AuthController {
                 "points", user.getPoints()
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(401).body(Map.of("error", "인증 정보가 유효하지 않습니다."));
         }
     }
 }

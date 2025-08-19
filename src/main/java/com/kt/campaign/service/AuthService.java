@@ -34,13 +34,22 @@ public class AuthService {
     }
     
     public String login(String email, String password) {
+        System.out.println("Login attempt for email: " + email);
+        
         AppUser user = appUserRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+                .orElseThrow(() -> {
+                    System.out.println("User not found for email: " + email);
+                    return new IllegalArgumentException("존재하지 않는 사용자입니다.");
+                });
+        
+        System.out.println("User found: " + user.getEmail() + " with role: " + user.getRole());
         
         if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            System.out.println("Password mismatch for user: " + email);
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
         
+        System.out.println("Login successful for user: " + email);
         return jwtUtil.generateToken(email, user.getRole().name());
     }
     
