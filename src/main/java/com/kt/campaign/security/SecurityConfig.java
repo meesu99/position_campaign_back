@@ -32,6 +32,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/signup", "/auth/login", "/auth/me", "/t/**").permitAll()
+                .requestMatchers("/customer/**").permitAll() // 고객 문자 확인 API는 누구나 접근 가능
                 .requestMatchers("/auth/logout").authenticated()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/campaigns/**").authenticated()

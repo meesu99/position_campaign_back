@@ -26,4 +26,6 @@ public interface CampaignTargetRepository extends JpaRepository<CampaignTarget, 
     @Query("SELECT ct FROM CampaignTarget ct WHERE ct.campaign.user.id = :userId AND ct.sentAt >= :startTime")
     List<CampaignTarget> findByUserIdAndSentAtAfter(@Param("userId") Long userId,
                                                    @Param("startTime") LocalDateTime startTime);
+    
+    List<CampaignTarget> findByCustomerIdOrderBySentAtDesc(Long customerId);
 }
