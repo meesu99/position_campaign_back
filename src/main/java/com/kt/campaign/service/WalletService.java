@@ -25,7 +25,8 @@ public class WalletService {
         AppUser user = appUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
-        Long currentBalance = getCurrentBalance(userId);
+        // 실제 거래 내역 합계로 현재 잔액 계산
+        Long currentBalance = walletTransactionRepository.calculateActualBalanceByUserId(userId);
         Long newBalance = currentBalance + amount;
         
         // 사용자 포인트 업데이트
@@ -48,7 +49,8 @@ public class WalletService {
         AppUser user = appUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
-        Long currentBalance = getCurrentBalance(userId);
+        // 실제 거래 내역 합계로 현재 잔액 계산
+        Long currentBalance = walletTransactionRepository.calculateActualBalanceByUserId(userId);
         
         if (currentBalance < amount) {
             throw new IllegalArgumentException("포인트가 부족합니다.");
@@ -72,8 +74,26 @@ public class WalletService {
     }
     
     public Long getCurrentBalance(Long userId) {
-        Long balance = walletTransactionRepository.findCurrentBalanceByUserId(userId);
-        return balance != null ? balance : 0L;
+        // 실제 거래 내역 합계로 정확한 잔액 계산
+        Long actualBalance = walletTransactionRepository.calculateActualBalanceByUserId(userId);
+        Long maxBalanceAfter = walletTransactionRepository.findCurrentBalanceByUserId(userId);
+        
+        // AppUser.points와 동기화
+        AppUser user = appUserRepository.findById(userId).orElse(null);
+        if (user != null) {
+            if (!actualBalance.equals(maxBalanceAfter)) {
+                System.out.println("Balance inconsistency detected - Actual sum: " + actualBalance + ", Max balance_after: " + maxBalanceAfter);
+            }
+            
+            if (!actualBalance.equals(user.getPoints())) {
+                System.out.println("User.points mismatch detected - Actual balance: " + actualBalance + ", User.points: " + user.getPoints());
+                // 실제 거래 합계로 AppUser.points 업데이트
+                user.setPoints(actualBalance);
+                appUserRepository.save(user);
+            }
+        }
+        
+        return actualBalance != null ? actualBalance : 0L;
     }
     
     public Page<WalletTransaction> getTransactionHistory(Long userId, Pageable pageable) {

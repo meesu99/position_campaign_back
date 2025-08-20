@@ -18,6 +18,7 @@ public class CampaignService {
     private final CampaignRepository campaignRepository;
     private final CampaignTargetRepository campaignTargetRepository;
     private final CustomerRepository customerRepository;
+    private final ChatMessageRepository chatMessageRepository;
     private final WalletService walletService;
     
     public Map<String, Object> previewCampaign(Map<String, Object> filters) {
@@ -36,6 +37,9 @@ public class CampaignService {
             Map<String, Object> genderFilter = (Map<String, Object>) filters.get("gender");
             if (Boolean.TRUE.equals(genderFilter.get("enabled"))) {
                 gender = (String) genderFilter.get("value");
+                if (gender != null && gender.trim().isEmpty()) {
+                    gender = null;
+                }
             }
         }
         
@@ -46,6 +50,16 @@ public class CampaignService {
                 Map<String, Object> regionValue = (Map<String, Object>) regionFilter.get("value");
                 sido = (String) regionValue.get("sido");
                 sigungu = (String) regionValue.get("sigungu");
+                
+                // 빈 문자열을 null로 변환하여 쿼리에서 제대로 처리되도록 함
+                if (sido != null && sido.trim().isEmpty()) {
+                    sido = null;
+                }
+                if (sigungu != null && sigungu.trim().isEmpty()) {
+                    sigungu = null;
+                }
+                
+                System.out.println("Region filter - sido: " + sido + ", sigungu: " + sigungu);
             }
         }
         
@@ -130,8 +144,9 @@ public class CampaignService {
     }
     
     private int calculateUnitPrice(int activeFilters) {
-        int[] prices = {0, 50, 70, 90, 110, 130};
-        return prices[Math.min(activeFilters, 5)];
+        // 0개: 50원, 1개: 70원, 2개: 110원, 3개: 130원, 4개: 150원
+        int[] prices = {50, 70, 110, 130, 150};
+        return prices[Math.min(activeFilters, 4)];
     }
     
     @Transactional
@@ -198,6 +213,9 @@ public class CampaignService {
             Map<String, Object> genderFilter = (Map<String, Object>) filters.get("gender");
             if (Boolean.TRUE.equals(genderFilter.get("enabled"))) {
                 gender = (String) genderFilter.get("value");
+                if (gender != null && gender.trim().isEmpty()) {
+                    gender = null;
+                }
             }
         }
         
@@ -208,6 +226,16 @@ public class CampaignService {
                 Map<String, Object> regionValue = (Map<String, Object>) regionFilter.get("value");
                 sido = (String) regionValue.get("sido");
                 sigungu = (String) regionValue.get("sigungu");
+                
+                // 빈 문자열을 null로 변환하여 쿼리에서 제대로 처리되도록 함
+                if (sido != null && sido.trim().isEmpty()) {
+                    sido = null;
+                }
+                if (sigungu != null && sigungu.trim().isEmpty()) {
+                    sigungu = null;
+                }
+                
+                System.out.println("Creating targets - sido: " + sido + ", sigungu: " + sigungu);
             }
         }
         
@@ -262,6 +290,21 @@ public class CampaignService {
         
         campaign.setStatus(Campaign.Status.COMPLETED);
         campaignRepository.save(campaign);
+        
+        // 캠페인 완료 알림 메시지 추가
+        createCampaignCompletionNotification(campaign);
+    }
+    
+    @Transactional
+    private void createCampaignCompletionNotification(Campaign campaign) {
+        ChatMessage notification = new ChatMessage();
+        notification.setUser(campaign.getUser());
+        notification.setFromAdmin(true);
+        notification.setCampaign(campaign);
+        notification.setText(String.format("🎉 '%s' 캠페인이 성공적으로 발송 완료되었습니다! 총 %d명에게 전송되었습니다.", 
+            campaign.getTitle(), campaign.getRecipientsCount()));
+        notification.setCreatedAt(LocalDateTime.now());
+        chatMessageRepository.save(notification);
     }
     
     public List<Campaign> getUserCampaigns(Long userId) {
@@ -332,15 +375,25 @@ public class CampaignService {
             String dateStr = date.toLocalDate().toString();
             labels.add(dateStr);
             
-            // 해당 날짜의 캠페인 통계 (간단한 예시)
-            int dailySent = (int) recentCampaigns.stream()
-                .filter(c -> c.getCreatedAt().toLocalDate().equals(date.toLocalDate()))
-                .mapToInt(c -> c.getRecipientsCount() != null ? c.getRecipientsCount() : 0)
-                .sum();
+            // 해당 날짜의 실제 캠페인 통계 계산
+            List<Campaign> dailyCampaigns = recentCampaigns.stream()
+                .filter(c -> c.getCreatedAt().toLocalDate().equals(date.toLocalDate()) && 
+                           c.getStatus() == Campaign.Status.COMPLETED)
+                .collect(java.util.stream.Collectors.toList());
+            
+            int dailySent = 0;
+            int dailyRead = 0;
+            int dailyClick = 0;
+            
+            for (Campaign campaign : dailyCampaigns) {
+                dailySent += (int) campaignTargetRepository.countSentByCampaignId(campaign.getId());
+                dailyRead += (int) campaignTargetRepository.countReadByCampaignId(campaign.getId());
+                dailyClick += (int) campaignTargetRepository.countClickByCampaignId(campaign.getId());
+            }
             
             sentData.add(dailySent);
-            readData.add((int) (dailySent * 0.7)); // 예시: 70% 읽음률
-            clickData.add((int) (dailySent * 0.1)); // 예시: 10% 클릭률
+            readData.add(dailyRead);
+            clickData.add(dailyClick);
         }
         
         chartData.put("labels", labels);
@@ -357,10 +410,15 @@ public class CampaignService {
                 dto.put("title", campaign.getTitle());
                 dto.put("status", campaign.getStatus().name());
                 dto.put("recipientsCount", campaign.getRecipientsCount());
+                dto.put("finalCost", campaign.getFinalCost());
+                dto.put("estimatedCost", campaign.getEstimatedCost());
                 dto.put("createdAt", campaign.getCreatedAt());
                 return dto;
             })
             .collect(java.util.stream.Collectors.toList());
+        
+        // 나이대별 분포 데이터 (실제 고객 데이터에서 계산)
+        List<Map<String, Object>> ageDistribution = calculateAgeDistribution();
         
         return Map.of(
             "totalSent", totalSent,
@@ -370,7 +428,23 @@ public class CampaignService {
             "readRate", totalSent > 0 ? (double) totalRead / totalSent * 100 : 0,
             "clickRate", totalSent > 0 ? (double) totalClick / totalSent * 100 : 0,
             "chartData", chartData,
-            "recentCampaigns", recentCampaignDtos
+            "recentCampaigns", recentCampaignDtos,
+            "ageDistribution", ageDistribution
         );
+    }
+    
+    private List<Map<String, Object>> calculateAgeDistribution() {
+        // 모든 고객의 나이대별 분포 계산
+        List<Object[]> ageGroups = customerRepository.getAgeDistribution();
+        
+        List<Map<String, Object>> distribution = new java.util.ArrayList<>();
+        for (Object[] row : ageGroups) {
+            Map<String, Object> ageGroup = new java.util.HashMap<>();
+            ageGroup.put("name", row[0]);
+            ageGroup.put("value", ((Number) row[1]).intValue());
+            distribution.add(ageGroup);
+        }
+        
+        return distribution;
     }
 }

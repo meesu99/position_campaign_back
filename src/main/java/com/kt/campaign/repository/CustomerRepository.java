@@ -59,4 +59,18 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                                                     @Param("centerLat") Double centerLat,
                                                     @Param("centerLng") Double centerLng,
                                                     @Param("radiusMeters") Integer radiusMeters);
+    
+    @Query(value = "SELECT " +
+                   "CASE " +
+                   "WHEN (2024 - birth_year) < 30 THEN '20대' " +
+                   "WHEN (2024 - birth_year) < 40 THEN '30대' " +
+                   "WHEN (2024 - birth_year) < 50 THEN '40대' " +
+                   "ELSE '50대+' " +
+                   "END as age_group, " +
+                   "COUNT(*) as count " +
+                   "FROM customers " +
+                   "GROUP BY age_group " +
+                   "ORDER BY age_group", 
+           nativeQuery = true)
+    java.util.List<Object[]> getAgeDistribution();
 }
