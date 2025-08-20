@@ -26,6 +26,51 @@ public class CampaignController {
     private final CampaignService campaignService;
     private final CustomerRepository customerRepository;
     private final AppUserRepository appUserRepository;
+
+    @GetMapping
+    public ResponseEntity<?> getUserCampaigns(@AuthenticationPrincipal String email) {
+        try {
+            AppUser user = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            List<Campaign> campaigns = campaignService.getUserCampaigns(user.getId());
+            
+            // DTO로 변환하여 JSON 직렬화 문제 방지
+            List<Map<String, Object>> campaignDtos = campaigns.stream()
+                .map(campaign -> {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", campaign.getId());
+                    dto.put("title", campaign.getTitle());
+                    dto.put("messageText", campaign.getMessageText());
+                    dto.put("link", campaign.getLink());
+                    dto.put("status", campaign.getStatus().name());
+                    dto.put("pricePerRecipient", campaign.getPricePerRecipient());
+                    dto.put("estimatedCost", campaign.getEstimatedCost());
+                    dto.put("finalCost", campaign.getFinalCost());
+                    dto.put("recipientsCount", campaign.getRecipientsCount());
+                    dto.put("createdAt", campaign.getCreatedAt());
+                                            return dto;
+                })
+                .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(campaignDtos);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<?> getDashboardStats(@AuthenticationPrincipal String email) {
+        try {
+            AppUser user = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            Map<String, Object> stats = campaignService.getDashboardStats(user.getId());
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
     
     @PostMapping
     public ResponseEntity<?> createCampaign(@AuthenticationPrincipal String email,
@@ -68,7 +113,10 @@ public class CampaignController {
     public ResponseEntity<?> getCampaignStats(@AuthenticationPrincipal String email,
                                             @PathVariable Long id) {
         try {
-            Map<String, Object> stats = campaignService.getCampaignStats(id);
+            AppUser user = appUserRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            Map<String, Object> stats = campaignService.getCampaignStats(id, user);
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
