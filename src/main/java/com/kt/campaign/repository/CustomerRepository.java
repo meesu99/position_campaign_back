@@ -31,7 +31,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                    "(:ageFrom IS NULL OR (2024 - c.birth_year) >= :ageFrom) AND " +
                    "(:ageTo IS NULL OR (2024 - c.birth_year) <= :ageTo) AND " +
                    "(:centerLat IS NULL OR :centerLng IS NULL OR :radiusMeters IS NULL OR " +
-                   "ST_DWithin(c.geom, ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326)::geography, :radiusMeters))",
+                   "ST_DWithin(c.geom, CAST(ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326) AS geography), :radiusMeters))",
            nativeQuery = true)
     long countByFiltersWithRadius(@Param("gender") String gender,
                                  @Param("sido") String sido,
@@ -49,7 +49,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                    "(:ageFrom IS NULL OR (2024 - c.birth_year) >= :ageFrom) AND " +
                    "(:ageTo IS NULL OR (2024 - c.birth_year) <= :ageTo) AND " +
                    "(:centerLat IS NULL OR :centerLng IS NULL OR :radiusMeters IS NULL OR " +
-                   "ST_DWithin(c.geom, ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326)::geography, :radiusMeters))",
+                   "ST_DWithin(c.geom, CAST(ST_SetSRID(ST_MakePoint(:centerLng, :centerLat), 4326) AS geography), :radiusMeters))",
            nativeQuery = true)
     java.util.List<Customer> findByFiltersWithRadius(@Param("gender") String gender,
                                                     @Param("sido") String sido,
