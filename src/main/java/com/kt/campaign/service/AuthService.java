@@ -43,8 +43,18 @@ public class AuthService {
                 });
         
         System.out.println("User found: " + user.getEmail() + " with role: " + user.getRole());
+        System.out.println("Input password: '" + password + "'");
+        System.out.println("Input password length: " + password.length());
+        System.out.println("Stored hash: " + user.getPasswordHash());
         
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        // 새로운 해시 생성해서 비교
+        String newHash = passwordEncoder.encode(password);
+        System.out.println("New hash for comparison: " + newHash);
+        
+        boolean matches = passwordEncoder.matches(password, user.getPasswordHash());
+        System.out.println("Password matches: " + matches);
+        
+        if (!matches) {
             System.out.println("Password mismatch for user: " + email);
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }

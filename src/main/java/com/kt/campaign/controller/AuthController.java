@@ -46,6 +46,8 @@ public class AuthController {
     
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpServletResponse response) {
+        System.out.println("Login endpoint reached!");
+        System.out.println("Request body: " + request);
         try {
             String token = authService.login(request.get("email"), request.get("password"));
             
@@ -70,6 +72,8 @@ public class AuthController {
                 )
             ));
         } catch (Exception e) {
+            System.out.println("Login error: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }

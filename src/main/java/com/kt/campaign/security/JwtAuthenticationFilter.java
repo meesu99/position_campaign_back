@@ -29,28 +29,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                   HttpServletResponse response, 
                                   FilterChain filterChain) throws ServletException, IOException {
         
-        String token = getTokenFromCookie(request);
-        
-        if (token != null && jwtUtil.validateToken(token)) {
-            String email = jwtUtil.getEmailFromToken(token);
-            String role = jwtUtil.getRoleFromToken(token);
+        try {
+            // jwtUtil과 jwtConfig가 null인지 체크
+            if (jwtUtil == null || jwtConfig == null) {
+                System.out.println("JWT components not initialized properly");
+                filterChain.doFilter(request, response);
+                return;
+            }
             
-            List<SimpleGrantedAuthority> authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_" + role)
-            );
+            String token = getTokenFromCookie(request);
             
-            UsernamePasswordAuthenticationToken authToken = 
-                new UsernamePasswordAuthenticationToken(email, null, authorities);
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (token != null && !token.isEmpty() && jwtUtil.validateToken(token)) {
+                String email = jwtUtil.getEmailFromToken(token);
+                String role = jwtUtil.getRoleFromToken(token);
+                
+                if (email != null && role != null) {
+                    List<SimpleGrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority("ROLE_" + role)
+                    );
+                    
+                    UsernamePasswordAuthenticationToken authToken = 
+                        new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("JWT Authentication error: " + e.getMessage());
+            e.printStackTrace();
+            // 인증 실패 시 SecurityContext를 클리어
+            SecurityContextHolder.clearContext();
         }
         
         filterChain.doFilter(request, response);
     }
     
     private String getTokenFromCookie(HttpServletRequest request) {
-        if (request.getCookies() != null) {
+        if (request.getCookies() != null && jwtConfig != null && jwtConfig.getCookieName() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if (jwtConfig.getCookieName().equals(cookie.getName())) {
                     return cookie.getValue();

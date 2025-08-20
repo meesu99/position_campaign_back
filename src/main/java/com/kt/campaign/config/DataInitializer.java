@@ -27,16 +27,85 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        // 데이터가 이미 있으면 초기화하지 않음
-        if (userRepository.count() > 0) {
+        // 관리자 계정 강제 업데이트 또는 생성
+        updateOrCreateAdminUser();
+        
+        // 일반 사용자 계정 강제 업데이트 또는 생성
+        updateOrCreateRegularUser();
+        
+        // 데이터가 이미 있으면 나머지 초기화하지 않음
+        if (userRepository.count() > 2) {
             return;
         }
 
-        initializeUsers();
         initializeCustomers();
         initializeCampaigns();
         initializeWalletTransactions();
         initializeChatMessages();
+    }
+
+    private void updateOrCreateAdminUser() {
+        System.out.println("Updating or creating admin user...");
+        
+        AppUser admin = userRepository.findByEmail("admin@example.com").orElse(null);
+        
+        if (admin == null) {
+            // 새로 생성
+            admin = new AppUser();
+            admin.setEmail("admin@example.com");
+            admin.setBusinessNo("123-45-67890");
+            admin.setCompanyName("Admin Company");
+            admin.setPoints(100000L);
+            admin.setRole(AppUser.Role.ADMIN);
+            admin.setCreatedAt(LocalDateTime.now());
+            System.out.println("Creating new admin user...");
+        } else {
+            System.out.println("Updating existing admin user password...");
+        }
+        
+        // 비밀번호는 항상 새로 해시해서 설정
+        admin.setPasswordHash(passwordEncoder.encode("admin123"));
+        userRepository.save(admin);
+        System.out.println("Admin user password updated to: admin123");
+    }
+    
+    private void updateOrCreateRegularUser() {
+        System.out.println("Updating or creating regular user...");
+        
+        AppUser user = userRepository.findByEmail("user@example.com").orElse(null);
+        
+        if (user == null) {
+            // 새로 생성
+            user = new AppUser();
+            user.setEmail("user@example.com");
+            user.setBusinessNo("987-65-43210");
+            user.setCompanyName("User Company");
+            user.setPoints(50000L);
+            user.setRole(AppUser.Role.USER);
+            user.setCreatedAt(LocalDateTime.now());
+            System.out.println("Creating new regular user...");
+        } else {
+            System.out.println("Updating existing regular user password...");
+        }
+        
+        // 비밀번호는 항상 새로 해시해서 설정
+        user.setPasswordHash(passwordEncoder.encode("user123"));
+        userRepository.save(user);
+        System.out.println("Regular user password updated to: user123");
+    }
+
+    private void createAdminUser() {
+        System.out.println("Creating admin user...");
+        AppUser admin = new AppUser();
+        admin.setEmail("admin@example.com");
+        admin.setPasswordHash(passwordEncoder.encode("admin123"));
+        admin.setBusinessNo("123-45-67890");
+        admin.setCompanyName("Admin Company");
+        admin.setPoints(100000L);
+        admin.setRole(AppUser.Role.ADMIN);
+        admin.setCreatedAt(LocalDateTime.now());
+        userRepository.save(admin);
+        System.out.println("Admin user created successfully!");
     }
 
     private void initializeUsers() {

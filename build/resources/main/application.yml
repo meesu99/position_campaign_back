@@ -29,7 +29,7 @@ server:
 
 app:
   jwt:
-    secret: mySecretKey123456789012345678901234567890
+    secret: myVeryLongAndSecureSecretKeyForJWTTokenGeneration123456789012345678901234567890
     expiration: 86400000 # 24 hours
     cookie-name: auth-token
 
