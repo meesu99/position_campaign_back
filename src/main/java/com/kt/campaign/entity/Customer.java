@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.locationtech.jts.geom.Point;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 
@@ -45,6 +46,7 @@ public class Customer {
     
     private Double lng;
     
+    @JsonIgnore
     @Column(name = "geom", columnDefinition = "geography(Point,4326)")
     private Point geom;
     

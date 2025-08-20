@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.List;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/admin")
@@ -36,12 +38,34 @@ public class AdminController {
                 gender, sido, sigungu, ageFrom, ageTo, pageable
             );
             
-            return ResponseEntity.ok(Map.of(
-                "customers", customers.getContent(),
-                "totalPages", customers.getTotalPages(),
-                "totalElements", customers.getTotalElements(),
-                "currentPage", customers.getNumber()
-            ));
+            // DTO로 변환하여 JSON 직렬화 문제 방지
+            List<Map<String, Object>> customerDtos = customers.getContent().stream()
+                .map(customer -> {
+                    Map<String, Object> dto = new HashMap<>();
+                    dto.put("id", customer.getId());
+                    dto.put("name", customer.getName());
+                    dto.put("gender", customer.getGender());
+                    dto.put("birthYear", customer.getBirthYear());
+                    dto.put("phone", customer.getPhone());
+                    dto.put("roadAddress", customer.getRoadAddress());
+                    dto.put("detailAddress", customer.getDetailAddress());
+                    dto.put("postalCode", customer.getPostalCode());
+                    dto.put("sido", customer.getSido());
+                    dto.put("sigungu", customer.getSigungu());
+                    dto.put("lat", customer.getLat());
+                    dto.put("lng", customer.getLng());
+                    dto.put("createdAt", customer.getCreatedAt());
+                    return dto;
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("customers", customerDtos);
+            response.put("totalPages", customers.getTotalPages());
+            response.put("totalElements", customers.getTotalElements());
+            response.put("currentPage", customers.getNumber());
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
