@@ -27,7 +27,9 @@ public interface CampaignTargetRepository extends JpaRepository<CampaignTarget, 
     List<CampaignTarget> findByUserIdAndSentAtAfter(@Param("userId") Long userId,
                                                    @Param("startTime") LocalDateTime startTime);
     
-    List<CampaignTarget> findByCustomerIdOrderBySentAtDesc(Long customerId);
+    @Query("SELECT ct FROM CampaignTarget ct LEFT JOIN FETCH ct.campaign c LEFT JOIN FETCH c.user " +
+           "WHERE ct.customer.id = :customerId ORDER BY ct.sentAt DESC")
+    List<CampaignTarget> findByCustomerIdOrderBySentAtDesc(@Param("customerId") Long customerId);
     
     // 시간별 통계를 위한 메서드들
     @Query("SELECT HOUR(ct.sentAt) as hour, COUNT(ct) as count FROM CampaignTarget ct " +

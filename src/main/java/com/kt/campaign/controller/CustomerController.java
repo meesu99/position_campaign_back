@@ -7,8 +7,11 @@ import com.kt.campaign.repository.CustomerRepository;
 import com.kt.campaign.repository.CampaignTargetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +26,11 @@ public class CustomerController {
     private final CustomerRepository customerRepository;
     private final CampaignTargetRepository campaignTargetRepository;
     
+    @PersistenceContext
+    private EntityManager entityManager;
+    
     @GetMapping("/{customerId}/messages")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getCustomerMessages(@PathVariable Long customerId) {
         try {
             // 고객 정보 조회
@@ -73,6 +80,7 @@ public class CustomerController {
     }
     
     @PostMapping("/messages/{targetId}/read")
+    @Transactional
     public ResponseEntity<?> markAsRead(@PathVariable Long targetId) {
         try {
             CampaignTarget target = campaignTargetRepository.findById(targetId).orElse(null);
@@ -83,6 +91,9 @@ public class CustomerController {
             if (target.getReadAt() == null) {
                 target.setReadAt(LocalDateTime.now());
                 campaignTargetRepository.save(target);
+                // 엔티티 매니저 캐시 새로고침
+                entityManager.flush();
+                entityManager.clear();
             }
             
             return ResponseEntity.ok(Map.of("success", true));
@@ -95,6 +106,7 @@ public class CustomerController {
     }
     
     @PostMapping("/messages/{targetId}/click")
+    @Transactional
     public ResponseEntity<?> markAsClicked(@PathVariable Long targetId) {
         try {
             CampaignTarget target = campaignTargetRepository.findById(targetId).orElse(null);
@@ -109,6 +121,9 @@ public class CustomerController {
                     target.setReadAt(LocalDateTime.now());
                 }
                 campaignTargetRepository.save(target);
+                // 엔티티 매니저 캐시 새로고침
+                entityManager.flush();
+                entityManager.clear();
             }
             
             return ResponseEntity.ok(Map.of("success", true));
