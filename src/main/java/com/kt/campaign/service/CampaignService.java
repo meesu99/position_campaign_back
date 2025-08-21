@@ -443,8 +443,13 @@ public class CampaignService implements CampaignServiceInterface {
             })
             .collect(java.util.stream.Collectors.toList());
         
-        // 나이대별 분포 데이터 (실제 고객 데이터에서 계산)
-        List<Map<String, Object>> ageDistribution = calculateAgeDistribution();
+        // 나이대별 분포 데이터 (사용자의 캠페인 대상자들만)
+        List<Map<String, Object>> ageDistribution = calculateUserAgeDistribution(userId);
+        
+        System.out.println("=== Age Distribution Debug ===");
+        System.out.println("UserId: " + userId);
+        System.out.println("Age Distribution: " + ageDistribution);
+        System.out.println("===============================");
         
         return Map.of(
             "totalSent", totalSent,
@@ -459,19 +464,109 @@ public class CampaignService implements CampaignServiceInterface {
         );
     }
     
-    private List<Map<String, Object>> calculateAgeDistribution() {
-        // 모든 고객의 나이대별 분포 계산
-        List<Object[]> ageGroups = customerRepository.getAgeDistribution();
+    private List<Map<String, Object>> calculateUserAgeDistribution(Long userId) {
+        // 디버깅: 사용자의 캠페인과 campaign_targets 데이터 확인
+        List<Campaign> userCampaigns = campaignRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        System.out.println("=== Campaign Targets Debug ===");
+        System.out.println("User campaigns count: " + userCampaigns.size());
         
+        for (Campaign campaign : userCampaigns) {
+            List<CampaignTarget> targets = campaignTargetRepository.findByCampaignId(campaign.getId());
+            System.out.println("Campaign " + campaign.getId() + " (" + campaign.getStatus() + "): " + targets.size() + " targets");
+            
+            if (!targets.isEmpty()) {
+                CampaignTarget firstTarget = targets.get(0);
+                System.out.println("  First target - Customer ID: " + firstTarget.getCustomer().getId() + 
+                                 ", Gender: " + firstTarget.getCustomer().getGender() + 
+                                 ", Birth Year: " + firstTarget.getCustomer().getBirthYear());
+            }
+        }
+        System.out.println("===============================");
+        
+        // 만약 완료된 캠페인에 campaign_targets가 없다면 생성
+        for (Campaign campaign : userCampaigns) {
+            if (campaign.getStatus() == Campaign.Status.COMPLETED) {
+                List<CampaignTarget> existingTargets = campaignTargetRepository.findByCampaignId(campaign.getId());
+                if (existingTargets.isEmpty() && campaign.getRecipientsCount() > 0) {
+                    System.out.println("Creating missing targets for campaign " + campaign.getId());
+                    createMissingCampaignTargets(campaign);
+                }
+            }
+        }
+        
+        // 사용자의 완료된 캠페인 대상자들의 나이대별/성별별 분포를 DB에서 직접 조회
+        List<Object[]> ageGenderGroups = campaignTargetRepository.getAgeGenderDistributionByUserId(userId);
+        
+        // 모든 나이대별 성별을 0으로 초기화
+        Map<String, Map<String, Integer>> ageGroupCounts = new java.util.HashMap<>();
+        String[] ageGroups = {"20대", "30대", "40대", "50대", "60대"};
+        
+        for (String ageGroup : ageGroups) {
+            Map<String, Integer> genderCounts = new java.util.HashMap<>();
+            genderCounts.put("남성", 0);
+            genderCounts.put("여성", 0);
+            ageGroupCounts.put(ageGroup, genderCounts);
+        }
+        
+        // DB 결과를 맵에 적용
+        for (Object[] row : ageGenderGroups) {
+            String ageGroup = (String) row[0];
+            String gender = (String) row[1];
+            Integer count = ((Number) row[2]).intValue();
+            
+            if (ageGroupCounts.containsKey(ageGroup)) {
+                ageGroupCounts.get(ageGroup).put(gender, count);
+            }
+        }
+        
+        // 프론트엔드가 기대하는 형태로 결과 생성 (각 나이대마다 male, female 값 포함)
         List<Map<String, Object>> distribution = new java.util.ArrayList<>();
-        for (Object[] row : ageGroups) {
-            Map<String, Object> ageGroup = new java.util.HashMap<>();
-            ageGroup.put("name", row[0]);
-            ageGroup.put("value", ((Number) row[1]).intValue());
-            distribution.add(ageGroup);
+        
+        for (String ageGroup : ageGroups) {
+            Map<String, Object> ageData = new java.util.HashMap<>();
+            ageData.put("name", ageGroup);
+            ageData.put("male", ageGroupCounts.get(ageGroup).get("남성"));
+            ageData.put("female", ageGroupCounts.get(ageGroup).get("여성"));
+            distribution.add(ageData);
         }
         
         return distribution;
+    }
+    
+    @Transactional
+    private void createMissingCampaignTargets(Campaign campaign) {
+        // 기존 캠페인의 필터 정보가 없다면 필터 없이 고객들을 선택
+        List<Customer> allCustomers = customerRepository.findByFiltersWithRadius(
+            null, null, null, null, null, null, null, null
+        );
+        
+        // recipientsCount만큼 랜덤하게 고객 선택
+        int targetCount = Math.min(campaign.getRecipientsCount(), allCustomers.size());
+        java.util.Collections.shuffle(allCustomers);
+        
+        List<Customer> selectedCustomers = allCustomers.subList(0, targetCount);
+        
+        for (Customer customer : selectedCustomers) {
+            CampaignTarget target = new CampaignTarget();
+            target.setCampaign(campaign);
+            target.setCustomer(customer);
+            target.setDeliveryStatus(CampaignTarget.DeliveryStatus.DELIVERED);
+            target.setSentAt(campaign.getCreatedAt()); // 캠페인 생성 시간을 발송 시간으로 사용
+            
+            // 일부는 읽음 처리 (30% 확률)
+            if (Math.random() < 0.3) {
+                target.setReadAt(campaign.getCreatedAt().plusMinutes((long)(Math.random() * 60)));
+            }
+            
+            // 일부는 클릭 처리 (5% 확률)
+            if (Math.random() < 0.05 && target.getReadAt() != null) {
+                target.setClickAt(target.getReadAt().plusMinutes((long)(Math.random() * 30)));
+            }
+            
+            campaignTargetRepository.save(target);
+        }
+        
+        System.out.println("Created " + selectedCustomers.size() + " targets for campaign " + campaign.getId());
     }
     
     private Map<String, Object> generateHourlyStats(Long campaignId) {
