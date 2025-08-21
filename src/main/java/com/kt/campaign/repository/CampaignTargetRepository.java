@@ -28,4 +28,20 @@ public interface CampaignTargetRepository extends JpaRepository<CampaignTarget, 
                                                    @Param("startTime") LocalDateTime startTime);
     
     List<CampaignTarget> findByCustomerIdOrderBySentAtDesc(Long customerId);
+    
+    // 시간별 통계를 위한 메서드들
+    @Query("SELECT HOUR(ct.sentAt) as hour, COUNT(ct) as count FROM CampaignTarget ct " +
+           "WHERE ct.campaign.id = :campaignId AND ct.sentAt IS NOT NULL " +
+           "GROUP BY HOUR(ct.sentAt) ORDER BY hour")
+    List<Object[]> findHourlySentStatsByCampaignId(@Param("campaignId") Long campaignId);
+    
+    @Query("SELECT HOUR(ct.readAt) as hour, COUNT(ct) as count FROM CampaignTarget ct " +
+           "WHERE ct.campaign.id = :campaignId AND ct.readAt IS NOT NULL " +
+           "GROUP BY HOUR(ct.readAt) ORDER BY hour")
+    List<Object[]> findHourlyReadStatsByCampaignId(@Param("campaignId") Long campaignId);
+    
+    @Query("SELECT HOUR(ct.clickAt) as hour, COUNT(ct) as count FROM CampaignTarget ct " +
+           "WHERE ct.campaign.id = :campaignId AND ct.clickAt IS NOT NULL " +
+           "GROUP BY HOUR(ct.clickAt) ORDER BY hour")
+    List<Object[]> findHourlyClickStatsByCampaignId(@Param("campaignId") Long campaignId);
 }

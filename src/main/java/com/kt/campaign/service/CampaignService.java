@@ -324,13 +324,17 @@ public class CampaignService {
         long read = campaignTargetRepository.countReadByCampaignId(campaignId);
         long click = campaignTargetRepository.countClickByCampaignId(campaignId);
         
+        // 시간별 통계 데이터 생성
+        Map<String, Object> hourlyData = generateHourlyStats(campaignId);
+        
         return Map.of(
             "campaign", campaign,
             "sent", sent,
             "read", read,
             "click", click,
             "readRate", sent > 0 ? (double) read / sent * 100 : 0,
-            "clickRate", sent > 0 ? (double) click / sent * 100 : 0
+            "clickRate", sent > 0 ? (double) click / sent * 100 : 0,
+            "hourlyData", hourlyData
         );
     }
 
@@ -446,5 +450,57 @@ public class CampaignService {
         }
         
         return distribution;
+    }
+    
+    private Map<String, Object> generateHourlyStats(Long campaignId) {
+        // 시간별 발송, 읽음, 클릭 데이터 조회
+        List<Object[]> hourlySentStats = campaignTargetRepository.findHourlySentStatsByCampaignId(campaignId);
+        List<Object[]> hourlyReadStats = campaignTargetRepository.findHourlyReadStatsByCampaignId(campaignId);
+        List<Object[]> hourlyClickStats = campaignTargetRepository.findHourlyClickStatsByCampaignId(campaignId);
+        
+        // 24시간 배열 초기화 (0-23시)
+        int[] sentByHour = new int[24];
+        int[] readByHour = new int[24];
+        int[] clickByHour = new int[24];
+        
+        // 발송 데이터 채우기
+        for (Object[] row : hourlySentStats) {
+            Integer hour = (Integer) row[0];
+            Long count = (Long) row[1];
+            if (hour != null && hour >= 0 && hour < 24) {
+                sentByHour[hour] = count.intValue();
+            }
+        }
+        
+        // 읽음 데이터 채우기
+        for (Object[] row : hourlyReadStats) {
+            Integer hour = (Integer) row[0];
+            Long count = (Long) row[1];
+            if (hour != null && hour >= 0 && hour < 24) {
+                readByHour[hour] = count.intValue();
+            }
+        }
+        
+        // 클릭 데이터 채우기
+        for (Object[] row : hourlyClickStats) {
+            Integer hour = (Integer) row[0];
+            Long count = (Long) row[1];
+            if (hour != null && hour >= 0 && hour < 24) {
+                clickByHour[hour] = count.intValue();
+            }
+        }
+        
+        // 시간별 데이터 배열 생성
+        List<Map<String, Object>> hourlyDataList = new java.util.ArrayList<>();
+        for (int hour = 0; hour < 24; hour++) {
+            Map<String, Object> hourData = new java.util.HashMap<>();
+            hourData.put("time", String.format("%02d:00", hour));
+            hourData.put("sent", sentByHour[hour]);
+            hourData.put("read", readByHour[hour]);
+            hourData.put("click", clickByHour[hour]);
+            hourlyDataList.add(hourData);
+        }
+        
+        return Map.of("hourlyStats", hourlyDataList);
     }
 }
