@@ -12,6 +12,24 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+/**
+ * 인증 관련 REST API를 처리하는 컨트롤러
+ * 
+ * 이 컨트롤러는 사용자 인증(로그인/회원가입/로그아웃) API를 제공합니다.
+ * JWT 토큰을 쿠키로 관리하며, HttpOnly 속성으로 보안을 강화합니다.
+ * 
+ * 주요 기능:
+ * - 회원가입: 이메일 중복 체크, 비밀번호 암호화
+ * - 로그인: JWT 토큰 생성 및 쿠키 설정
+ * - 로그아웃: 쿠키 삭제
+ * - 현재 사용자 정보 조회
+ * 
+ * 보안 특징:
+ * - JWT 토큰을 HttpOnly 쿠키로 저장
+ * - CSRF 공격 방지를 위한 SameSite 설정
+ * 
+ * @author KT 위치 문자 서비스 팀
+ */
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor

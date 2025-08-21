@@ -10,6 +10,23 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+/**
+ * 캠페인 엔티티
+ * 
+ * 이 엔티티는 위치 기반 문자 캠페인의 정보를 저장합니다.
+ * 
+ * 주요 속성:
+ * - 캠페인 기본 정보 (제목, 메시지 내용, 링크)
+ * - 상태 관리 (초안, 대기, 진행중, 완료, 취소)
+ * - 비용 정보 (예상 비용, 최종 비용, 수신자당 가격)
+ * - 필터 조건 (JSON 형태로 저장)
+ * 
+ * 연관 관계:
+ * - AppUser: 캠페인을 생성한 사용자 (N:1)
+ * - CampaignTarget: 캠페인 발송 대상자들 (1:N)
+ * 
+ * @author KT 위치 문자 서비스 팀
+ */
 @Entity
 @Table(name = "campaigns")
 @Getter

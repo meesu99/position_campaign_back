@@ -19,6 +19,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 캠페인 관련 REST API를 처리하는 컨트롤러
+ * 
+ * 이 컨트롤러는 캠페인의 생성, 조회, 발송, 통계 등의 API 엔드포인트를 제공합니다.
+ * 인증된 사용자만 접근할 수 있으며, JWT 토큰을 통해 사용자를 식별합니다.
+ * 
+ * 주요 기능:
+ * - 캠페인 미리보기 (고객 수, 예상 비용 계산)
+ * - 캠페인 생성 및 발송
+ * - 캠페인 목록 조회 및 상세 통계
+ * - 대시보드용 통합 통계 제공
+ * 
+ * @author KT 위치 문자 서비스 팀
+ */
 @RestController
 @RequestMapping("/campaigns")
 @RequiredArgsConstructor

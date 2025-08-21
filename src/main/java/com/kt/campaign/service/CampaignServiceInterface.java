@@ -8,6 +8,13 @@ import java.util.Map;
 
 /**
  * 캠페인 관련 비즈니스 로직을 처리하는 서비스 인터페이스
+ * 
+ * 이 인터페이스는 캠페인의 생성, 발송, 통계 조회 등의 핵심 비즈니스 로직을 정의합니다.
+ * 구현체는 CampaignService 클래스이며, 의존성 역전 원칙을 적용하여
+ * 컨트롤러가 구체적인 구현이 아닌 인터페이스에 의존하도록 설계되었습니다.
+ * 
+ * @author KT 위치 문자 서비스 팀
+ * @version 1.0
  */
 public interface CampaignServiceInterface {
     

@@ -8,6 +8,25 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 인증 및 사용자 관리 서비스 구현체
+ * 
+ * 이 서비스는 사용자 회원가입, 로그인, 사용자 정보 조회 등의
+ * 인증 관련 핵심 비즈니스 로직을 구현합니다.
+ * 
+ * 주요 기능:
+ * - 사용자 회원가입 (이메일 중복 체크, 비밀번호 암호화)
+ * - JWT 기반 로그인 (토큰 생성 및 반환)
+ * - 현재 인증된 사용자 정보 조회
+ * 
+ * 보안 특징:
+ * - BCrypt를 이용한 비밀번호 암호화
+ * - JWT 토큰 생성 및 관리
+ * - 이메일 중복 검증
+ * 
+ * @author KT 위치 문자 서비스 팀
+ * @version 1.0
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

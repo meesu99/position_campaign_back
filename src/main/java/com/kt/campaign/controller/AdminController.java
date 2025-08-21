@@ -16,6 +16,25 @@ import java.util.Map;
 import java.util.List;
 import java.util.HashMap;
 
+/**
+ * 관리자 전용 REST API를 처리하는 컨트롤러
+ * 
+ * 이 컨트롤러는 관리자만 접근할 수 있는 고객 관리 API를 제공합니다.
+ * Spring Security에서 ADMIN 역할을 가진 사용자만 접근이 허용됩니다.
+ * 
+ * 주요 기능:
+ * - 고객 목록 조회 (ID 순 정렬, 페이징)
+ * - 고객 정보 수정
+ * - 고객 삭제
+ * - 필터링 기능 (성별, 지역, 나이)
+ * 
+ * 특별 기능:
+ * - ID 순서대로 정렬하여 관리 편의성 향상
+ * - 위치 정보 (PostGIS) 처리
+ * - DTO 변환으로 JSON 직렬화 문제 해결
+ * 
+ * @author KT 위치 문자 서비스 팀
+ */
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor

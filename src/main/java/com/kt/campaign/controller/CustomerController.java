@@ -18,6 +18,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 고객 메시지 확인 및 상호작용 API를 처리하는 컨트롤러
+ * 
+ * 이 컨트롤러는 고객이 받은 캠페인 메시지를 확인하고 상호작용하는 API를 제공합니다.
+ * 인증 없이 접근 가능하며, 고객 ID로 메시지를 조회할 수 있습니다.
+ * 
+ * 주요 기능:
+ * - 고객별 받은 메시지 목록 조회
+ * - 메시지 읽음 처리 (readAt 업데이트)
+ * - 메시지 링크 클릭 처리 (clickAt 업데이트)
+ * 
+ * 특별 기능:
+ * - JPA 1차 캐시 관리로 실시간 상태 업데이트 반영
+ * - 트랜잭션 분리 (REQUIRES_NEW)로 즉시 커밋
+ * - EntityManager를 이용한 캐시 클리어
+ * 
+ * @author KT 위치 문자 서비스 팀
+ */
 @RestController
 @RequestMapping("/customer")
 @RequiredArgsConstructor

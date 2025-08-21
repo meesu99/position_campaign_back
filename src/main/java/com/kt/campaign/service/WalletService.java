@@ -12,6 +12,31 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
+/**
+ * 지갑(포인트) 관련 비즈니스 로직을 처리하는 서비스 구현체
+ * 
+ * 이 서비스는 사용자의 포인트 충전, 차감, 잔액 조회 등의
+ * 지갑 관련 핵심 비즈니스 로직을 구현합니다.
+ * 
+ * 주요 기능:
+ * - 포인트 충전 및 거래 내역 생성
+ * - 캠페인 발송을 위한 포인트 차감
+ * - 실시간 잔액 계산 (거래 내역 합계 기반)
+ * - 거래 내역 페이징 조회
+ * 
+ * 특별 기능:
+ * - 실제 거래 내역 합계로 잔액 계산 (데이터 정합성 보장)
+ * - 트랜잭션 처리로 데이터 일관성 유지
+ * - 충전/차감 시 메타데이터 저장 (캠페인 ID 등)
+ * 
+ * 잔액 계산 방식:
+ * - 충전(CHARGE): 양수 금액
+ * - 차감(DEBIT): 음수 금액
+ * - 현재 잔액 = 모든 거래 내역의 amount 합계
+ * 
+ * @author KT 위치 문자 서비스 팀
+ * @version 1.0
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

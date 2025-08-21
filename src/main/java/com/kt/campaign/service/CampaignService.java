@@ -10,6 +10,28 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 캠페인 관련 비즈니스 로직을 처리하는 서비스 구현체
+ * 
+ * 이 서비스는 캠페인의 생성, 발송, 통계 조회 등의 핵심 비즈니스 로직을 구현합니다.
+ * 위치 기반 문자 캠페인의 전체 생명주기를 관리합니다.
+ * 
+ * 주요 기능:
+ * - 캠페인 미리보기 (필터 조건에 맞는 고객 수 및 예상 비용 계산)
+ * - 캠페인 생성 및 발송 처리
+ * - 실시간 캠페인 통계 조회 (발송, 읽음, 클릭)
+ * - 대시보드용 통합 통계 제공
+ * - 시간별 성과 분석 (실제 데이터 기반)
+ * 
+ * 특별 기능:
+ * - 지역 기반 고객 필터링 (시도, 시군구)
+ * - 나이대별 성별 분포 계산
+ * - 실시간 hourly 통계 생성
+ * - 포인트 차감 및 캠페인 발송 처리
+ * 
+ * @author KT 위치 문자 서비스 팀
+ * @version 1.0
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
