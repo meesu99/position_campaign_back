@@ -5,7 +5,7 @@ import com.kt.campaign.entity.Campaign;
 import com.kt.campaign.entity.Customer;
 import com.kt.campaign.repository.AppUserRepository;
 import com.kt.campaign.repository.CustomerRepository;
-import com.kt.campaign.service.CampaignService;
+import com.kt.campaign.service.CampaignServiceInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CampaignController {
     
-    private final CampaignService campaignService;
+    private final CampaignServiceInterface campaignService;
     private final CustomerRepository customerRepository;
     private final AppUserRepository appUserRepository;
 

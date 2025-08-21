@@ -2,8 +2,8 @@ package com.kt.campaign.controller;
 
 import com.kt.campaign.entity.AppUser;
 import com.kt.campaign.entity.WalletTransaction;
-import com.kt.campaign.service.AuthService;
-import com.kt.campaign.service.WalletService;
+import com.kt.campaign.service.AuthServiceInterface;
+import com.kt.campaign.service.WalletServiceInterface;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,8 +19,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class WalletController {
     
-    private final WalletService walletService;
-    private final AuthService authService;
+    private final WalletServiceInterface walletService;
+    private final AuthServiceInterface authService;
     
     @PostMapping("/charge")
     public ResponseEntity<?> charge(@RequestBody Map<String, Object> request,

@@ -13,13 +13,13 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CampaignService {
+public class CampaignService implements CampaignServiceInterface {
     
     private final CampaignRepository campaignRepository;
     private final CampaignTargetRepository campaignTargetRepository;
     private final CustomerRepository customerRepository;
     private final ChatMessageRepository chatMessageRepository;
-    private final WalletService walletService;
+    private final WalletServiceInterface walletService;
     
     public Map<String, Object> previewCampaign(Map<String, Object> filters) {
         // 새로운 필터 구조 파싱 (enabled/value 구조)

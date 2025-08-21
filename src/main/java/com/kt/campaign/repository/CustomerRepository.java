@@ -16,7 +16,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
            "(:sido IS NULL OR c.sido = :sido) AND " +
            "(:sigungu IS NULL OR c.sigungu = :sigungu) AND " +
            "(:ageFrom IS NULL OR (2024 - c.birthYear) >= :ageFrom) AND " +
-           "(:ageTo IS NULL OR (2024 - c.birthYear) <= :ageTo)")
+           "(:ageTo IS NULL OR (2024 - c.birthYear) <= :ageTo) " +
+           "ORDER BY c.id ASC")
     Page<Customer> findByFilters(@Param("gender") String gender,
                                 @Param("sido") String sido,
                                 @Param("sigungu") String sigungu,

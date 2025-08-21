@@ -2,7 +2,7 @@ package com.kt.campaign.controller;
 
 import com.kt.campaign.config.JwtConfig;
 import com.kt.campaign.entity.AppUser;
-import com.kt.campaign.service.AuthService;
+import com.kt.campaign.service.AuthServiceInterface;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
     
-    private final AuthService authService;
+    private final AuthServiceInterface authService;
     private final JwtConfig jwtConfig;
     
     @PostMapping("/signup")

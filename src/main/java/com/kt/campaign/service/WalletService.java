@@ -15,7 +15,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class WalletService {
+public class WalletService implements WalletServiceInterface {
     
     private final WalletTransactionRepository walletTransactionRepository;
     private final AppUserRepository appUserRepository;
